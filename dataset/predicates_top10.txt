@@ -1,0 +1,10 @@
+<http://dbpedia.org/ontology/voice>
+<http://dbpedia.org/ontology/operator>
+<http://dbpedia.org/ontology/municipality>
+<http://dbpedia.org/ontology/leaderName>
+<http://dbpedia.org/property/nationality>
+<http://dbpedia.org/ontology/location>
+<http://dbpedia.org/property/type>
+<http://dbpedia.org/property/starring>
+<http://dbpedia.org/property/pastteams>
+<http://dbpedia.org/ontology/architecturalStyle>

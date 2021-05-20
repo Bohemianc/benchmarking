@@ -1,0 +1,4 @@
+@prefix dbo: <http://dbpedia.org/ontology/>
+@prefix dbr: <http://dbpedia.org/resource/>
+@prefix dbp: <http://dbpedia.org/property/>
+@prefix rdf: <https://www.w3.org/1999/02/22-rdf-syntax-ns#>

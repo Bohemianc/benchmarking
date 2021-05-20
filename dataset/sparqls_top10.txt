@@ -1,0 +1,10 @@
+SELECT DISTINCT ?uri WHERE { dbr:Roberto_Clemente_Bridge dbo:municipality ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:SR_class_3Sub dbo:operator ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Rishikesh dbo:leaderName ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Greenup_County_High_School dbp:type ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Bobby_Hoppe dbp:pastteams ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Lucy_Sullivan_Is_Getting_Married dbp:starring ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:South_Loop_Printing_House_District dbo:architecturalStyle ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Newin_Chidchob dbp:nationality ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Allen_Walker dbo:voice ?uri }
+SELECT DISTINCT ?uri WHERE { dbr:Swedish_Covenant_Hospital dbo:location ?uri }
