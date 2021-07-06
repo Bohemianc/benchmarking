@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-lab_mem = "内存大小（M）"
+lab_mem = "内存大小（MB）"
 lab_time = "时间（s）"
 
 plt.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
@@ -79,7 +79,7 @@ def plot_rule_depth(rds: list, run_time: list, mem_size: list, fn: str):
     for y in ax1.get_yticklabels():
         y.set_fontsize(14)
 
-    ax1.set_ylim([15, 90])
+    ax1.set_ylim([0, 70])
     ax2 = ax1.twinx()  # 创建共用x轴的第二个y轴
     ax2.set_ylim([500, 1600])
     # axes = plt.gca()
@@ -98,7 +98,7 @@ def plot_rule_depth(rds: list, run_time: list, mem_size: list, fn: str):
 
 
 if __name__ == "__main__":
-    data_size = ["112M", "224M", "341M", "451M"]
+    data_size = ["112MB", "224MB", "341MB", "451MB"]
     run_time = [24, 40, 69, 90]
     mem_size = [792, 1316, 1542, 1593]
     # plot_data_size(data_size, run_time, mem_size, "1.png")
@@ -109,9 +109,12 @@ if __name__ == "__main__":
     rls = ["2", "5", "10"]
     run_time = [14.511, 14.903, 16.384]
     mem_size = [632, 772, 859]
-    plot_rule_length(rls, run_time, mem_size, "2.png")
+    # plot_rule_length(rls, run_time, mem_size, "2.png")
 
     # rds = rls
     # run_time = [19, 18, 20]
     # mem_size = [746, 653, 698]
-    # plot_rule_depth(rds, run_time, mem_size, "3.png")
+    rds = ["1", "5", "10"]
+    run_time = [13.641, 13.901, 15.852]
+    mem_size = [731, 577, 639]
+    plot_rule_depth(rds, run_time, mem_size, "3.png")

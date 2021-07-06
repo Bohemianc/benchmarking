@@ -94,20 +94,44 @@ def delete_illigal_lines(infile: str, outfile: str):
 
 import re
 
-# todo: unify the pattern to match rules of any length
-pattern_rules=re.compile(r'(\S*?)\((.*?),(.*?)\)')
+# match rules of any length
+pattern_rules = re.compile(r'(\S*?)\((.*?),(.*?)\)')
+pattern_facts_dlp = re.compile(r'(<.*?>)\((<.*?>),(.*)\)')
+
+
 # pattern_2 = re.compile(r'(.*?)\((.*?),(.*?)\) :- (.*?)\((.*?),(.*?)\)\.')
 # pattern_3 = re.compile(r'(.*?)\((.*?),(.*?)\) :-[ (.*?)\((.*?),(.*?)\),]* (.*?)\((.*?),(.*?)\)\.')
 # pattern_4 = re.compile(r'(.*?)\((.*?),(.*?)\) :- (.*?)\((.*?),(.*?)\), (.*?)\((.*?),(.*?)\), (.*?)\((.*?),(.*?)\)\.')
 
 
-def dlp_parser(fn: str, rl: int):
+def dlp2fact(line: str):
+    # print(line)
+    result = pattern_facts_dlp.findall(line)
+    if len(result) > 0:
+        return [result[0][1], result[0][0], result[0][2]]
+    return None
+
+
+def dlp2facts(infile: str):
+    facts = []
+    with open(infile, "r", encoding="utf-8") as f:
+        for buf in f:
+            fact = dlp2fact(buf.strip("\n"))
+            if fact is not None:
+                facts.append(fact)
+    return facts
+
+
+def dlp_parser(fn: str, rl: int, limit_rules: int = 100000):
     res = []
     params = ["X"]
     for i in range(1, rl - 1):
         params.append("Z" + str(i))
     with open(fn, "r", encoding="utf-8") as f:
-        for buf in f:
+        # for buf in f:
+        file = f.readlines()
+        for i in range(min(len(file), limit_rules)):
+            buf = file[i]
             result = pattern_rules.findall(buf.strip("\n"))
             try:
                 item1 = [tup[0] for tup in result]
@@ -117,8 +141,9 @@ def dlp_parser(fn: str, rl: int):
                 print(result)
                 exit(111)
             item2 = []
-            for i in range(1, rl):
-                item2.append(result[i][1] == params[i - 1])
+            for j in range(1, rl):
+                # print(result, params, i)
+                item2.append(result[j][1] == params[j - 1])
             res.append([item1, item2])
     return res
 
@@ -147,31 +172,5 @@ def dlp_writer(pt: str, pres: list, not_inverse: list):
 
 
 if __name__ == "__main__":
-    # # === get data for query answering ===
-    # dir_onto = "dbpedia\\ontology"
-    # dir_info = "dbpedia\\infobox"
-    #
-    # fns = [
-    #     # "instance-types_lang=en_specific.ttl",
-    #     # "instance-types_lang=en_transitive.ttl",
-    #     # "mappingbased-literals_lang=en.ttl",
-    #     "mappingbased-objects_lang=en.ttl",
-    #     # "specific-mappingbased-properties_lang=en.ttl",
-    # ]
-    # paths = [os.path.join(dir_onto, x) for x in fns]
-    # # paths.append(os.path.join(dir_info, "infobox-properties_lang=en.ttl"))
-    # # for f in paths:
-    # #     print(f)
-    # #     ttl2dlp(f, "dbpedia\\data4qa\\facts_mapping.dlp")
-    # # ttl2dlp("test_v5\\p0_lp10000\\facts.ttl","dbpedia\\data4qa\\facts_p0.dlp")
-    #
-    # ttl2dlp("0422\\facts.ttl", "0422\\facts.dlp")
-    # # delete lines including '\' in *.dlp
-    # delete_illigal_lines(
-    #     "0422\\facts.dlp", "0422\\facts_p0_10000.dlp"
-    # )
-    # rules = dlp_parser(os.path.join("test_v7_e3","p0","rules.dlp"), 3)
-    # print(rules)
-    # print(len(rules), len(rules[0]), len(rules[0][0]))
-    rules=dlp_parser("1.txt",5)
-    print(rules[0])
+    # print(dlp_parser(os.path.join("test_v8","p0","rules.dlp"),2)[0][0])
+    pass

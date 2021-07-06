@@ -1,3 +1,5 @@
+import time
+
 from requests_html import HTMLSession
 from requests import adapters
 from tqdm import tqdm
@@ -18,13 +20,19 @@ with open("meaningless_predicates.txt", "r", encoding="utf-8") as fmp:
     bad_predicates = fmp.readline()
 
 
-# position: 0, 1, 2 represents subject, predicate, and object, respectively.
+# position
+# 0: query by the subject
+# 1: query by the predicate
+# 2: query by the object
+# 3: query by the subject and the predicate
+# 4: query by the predicate and the object
 def crawl(
         query: tuple,
         position: int,
         lock: mp.Lock = None,
         limit: int = 300,
         bad_requests_dir: str = ".",
+        offset: int = 0
 ):
     # print(str(query)+" in crawl()")
     params = {
@@ -43,6 +51,7 @@ def crawl(
     if position == 0 or position == 1 or position == 4:
         query_str += 'MINUS { FILTER regex(?z,"http://dbpedia.org/class/yago|http://www.wikidata.org/entity/")}'
     query_str += "} LIMIT " + str(limit)
+    query_str += " OFFSET " + str(offset)
 
     params["query"] = query_str
     result = None
@@ -55,7 +64,9 @@ def crawl(
                 break
             else:
                 print("There is a html file!")
-                # print(result)
+                print(result)
+                print("Sleeping...")
+                time.sleep(60)
         except UnicodeDecodeError:
             if lock is not None:
                 lock.acquire()
@@ -102,11 +113,12 @@ def crawl_mp(
         qu: mp.Queue,
         query: tuple,
         choice: int,
-        lock: mp.Lock,
-        limit: int,
-        bad_requests_dir: str,
+        lock: mp.Lock = None,
+        limit: int = 10000,
+        bad_requests_dir: str = ".",
+        offset: int = 0
 ):
-    result, indices = crawl(query, choice, lock, limit, bad_requests_dir)
+    result, indices = crawl(query, choice, lock, limit, bad_requests_dir, offset)
     if result is not None:
         qu.put((choice, result, indices))
 
@@ -151,4 +163,4 @@ def get_facts_by_predicate(p: str, outfile: str, limit: int = 1000, save_new_ent
                     get_new_entities(fact, dic_e, 1)
 
     if save_new_entities:
-            return dic_e
+        return dic_e

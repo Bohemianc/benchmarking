@@ -1,79 +1,145 @@
 import os
+import logging
 import sys
-# import get_facts as q
-# import sampling_mp
+
 import filtering
-import utilities
+import formatter
+import rule_learning
+import sampling_qa
 
-name = lambda s, l: os.path.join("dataset", s + "_selected" + str(l) + ".txt")
 
-
-def get_PE(fn_sparqls: str, fn_entity, fn_predicate):
+def get_ents_and_pres(fn_sparqls: str, fn_entity, fn_predicate):
     with open(fn_sparqls, "r", encoding="utf-8", ) as f1, open(
             fn_entity, "w", encoding="utf-8"
     ) as entity, open(fn_predicate, "w", encoding="utf-8") as predicate:
         se = set()
         sp = set()
-        while True:
-            buf = f1.readline()
-            if len(buf) > 0:
-                li = buf.split(" ")
-                # print(li)
-                if li[-2] != "?uri":
-                    se.add(filtering.replace_prefix_in_terms(li[-2]))
-                if li[-4] != "?uri":
-                    se.add(filtering.replace_prefix_in_terms(li[-4]))
-                sp.add(filtering.replace_prefix_in_terms(li[-3]))
-            else:
-                break
+        for buf in f1:
+            li = buf.split(" ")
+            for i in range(5, len(li) - 1, 4):
+                if "?" not in li[i]:
+                    se.add(filtering.replace_prefix_in_terms(li[i]))
+                if "?" not in li[i + 2]:
+                    se.add(filtering.replace_prefix_in_terms(li[i + 2]))
+                sp.add(filtering.replace_prefix_in_terms(li[i + 1]))
         for it in se:
             entity.write(it + "\n")
         for it in sp:
             predicate.write(it + "\n")
 
 
-def select_queries(length: int):
-    fn_sparqls = os.path.join("dataset", "sparqls.txt")
-    fn_sparqls_selected = name("sparqls", length)
-    utilities.get_partof_file(fn_sparqls, fn_sparqls_selected, 0, length)
-    get_PE(fn_sparqls_selected, name("entities"), name("predicates"))
-
-
-def elaborate_queries(lines: list):
-    # index starting with 1
-    fn_sparqls = os.path.join("dataset", "sparqls.txt")
-    fn_sparqls_elaborate = os.path.join("dataset", "sparqls_elaborate.txt")
-    fn_entities = os.path.join("dataset", "entities_elaborate.txt")
-    fn_predicates = os.path.join("dataset", "predicates_elaborate.txt")
-
-    utilities.extract_lines(lines, fn_sparqls, fn_sparqls_elaborate)
-    get_PE(fn_sparqls_elaborate, fn_entities, fn_predicates)
-
-
 if __name__ == "__main__":
-    # dataset_dir = lambda x: os.path.join("dataset", x)
-    # get_PE(dataset_dir("sparqls.txt"), dataset_dir("entities.txt"), dataset_dir("predicates.txt"))
-    # test_version = "test_v4"
-    # # ================================ #
-    # # ======== read arguments ======== #
-    # # ================================ #
-    # test_id = sys.argv[1]
-    # iteration = int(sys.argv[2])
-    # limit = int(sys.argv[3])
-    # target_pnames = []
-    # with open(os.path.join("dataset", "predicates.txt"), "r") as fp:
-    #     # for buf in fp:
-    #     #     target_pnames.append(buf.strip("\n"))
-    #     for i in range(1):
-    #         target_pnames.append(fp.readline().strip("\n"))
-    #
-    # facts_fn="0426\\facts_0426.txt"
-    # LIMIT_PREDICATE=5000
-    # for pt in target_pnames:
-    #     new_entities=set()
-    #     new_entities.update(q.get_facts_by_predicate(pt, facts_fn, LIMIT_PREDICATE))
-    #     s=sampling_mp.Sampling("0426",1,300,facts_fn)
-    #     s.main(list(new_entities))
-    j=lambda x,y:os.path.join(x,y)
-    utilities.get_partof_file(j("dataset","sparqls.txt"),j("dataset","sparqls_top10.txt"),0,10)
-    get_PE(j("dataset","sparqls_top10.txt"),j("dataset","entities_top10.txt"),j("dataset","predicates_top10.txt"))
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+    # ====================== set or input parameters ===================================== #
+    test_id = "test_v9_e6_bm=100"
+    dataset_dir = lambda x: os.path.join("dataset", x)
+    # NUM_QUERIES = 10
+    # parameters of rule learning
+    BEAM_SIZE = 100
+    RULE_LEN = 3  # greater or equal to 2
+    RULE_DEP = 10
+    LIMIT_SAMPLING = 100
+    LIMIT_PREDICATE = 1000
+    MAX_NEW_ENTITIES = 3000
+    # parameters of merging rules and sampling4qa
+    LIMIT_RULES = 10
+    # input parameters
+    # args = sys.argv[1:]
+    # try:
+    #     for i, arg in enumerate(args):
+    #         if "-" not in arg:
+    #             continue
+    #         if arg == "-d":
+    #             test_id = args[i + 1]
+    #         elif arg == "-nq":
+    #             NUM_QUERIES = int(args[i + 1])
+    #         elif arg == "-bs":
+    #             BEAM_SIZE = int(args[i + 1])
+    #         elif arg == "-rl":
+    #             RULE_LEN = int(args[i + 1])
+    #         elif arg == "-rd":
+    #             RULE_DEP = int(args[i + 1])
+    #         elif arg == "-ls":
+    #             LIMIT_SAMPLING = int(args[i + 1])
+    #         elif arg == "-lp":
+    #             LIMIT_PREDICATE = int(args[i + 1])
+    #         elif arg == "-mne":
+    #             MAX_NEW_ENTITIES = int(args[i + 1])
+    #         elif arg == "-lr":
+    #             LIMIT_RULES = int(args[i + 1])
+    #         else:
+    #             print("Parameter Error!")
+    #             exit(0)
+    # except ValueError:
+    #     print("Parameter Error!")
+    #     exit(0)
+
+    if not os.path.exists(test_id):
+        os.mkdir(test_id)
+    dir_data = os.path.join(test_id, "data")
+    dir_rules = os.path.join(test_id, "rules")
+    fn_rules = os.path.join(dir_rules, "rules_lr=" + str(LIMIT_RULES) + ".dlp")
+    if not os.path.exists(dir_rules):
+        os.mkdir(dir_rules)
+    MAX_ITERATION = max(1, RULE_LEN - 2)
+
+    postfix_str = "1961-5.txt"
+    fn_src_queries = dataset_dir("sparql" + postfix_str)
+    fn_q_pres = dataset_dir("predicates" + postfix_str)
+    fn_q_ents = dataset_dir("entities" + postfix_str)
+
+    # record settings
+    fn_result_total = os.path.join(test_id, "results.txt")
+    with open(fn_result_total, "a", encoding="utf-8") as f_result:
+        f_result.write(f"query file: {fn_src_queries}\n")
+        f_result.write(f"beam size: {BEAM_SIZE}\n")
+        f_result.write(f"rule length: {RULE_LEN}\n")
+        f_result.write(f"rule depth: {RULE_DEP}\n")
+        f_result.write(f"limit (predicates): {LIMIT_PREDICATE}\n")
+        f_result.write(f"limit (sampling by entities): {LIMIT_SAMPLING}\n")
+        f_result.write(f"max new entities: {MAX_NEW_ENTITIES}\n")
+        f_result.write(f"limit rules: {LIMIT_RULES}\n")
+        f_result.write("\n")
+    # ====================== select queries and get pres and entities ==================== #
+    # utilities.get_partof_file(dataset_dir("sparqls.txt"), fn_src_queries, 0, NUM_QUERIES)
+    get_ents_and_pres(fn_src_queries, fn_q_ents, fn_q_pres)
+
+    # ====================== rule learning =============================================== #
+    rule_learning.rule_learning(test_id, fn_q_pres, fn_q_ents, BEAM_SIZE, RULE_LEN, RULE_DEP, MAX_ITERATION,
+                                LIMIT_SAMPLING, LIMIT_PREDICATE,
+                                MAX_NEW_ENTITIES, LIMIT_RULES)
+
+    # =========== merge rules, eliminating recursion and sampling for query answering ==== #
+    # store all the predicates in the phase of rule learning
+    logging.info("Begin to merge rules without recursion.")
+    dic_p = {}
+    # rule_learning() stores the pre dict in "predicates.txt"
+    with open(os.path.join(test_id, "predicates.txt"), "r", encoding="utf-8") as f:
+        for buf in f:
+            k, v = buf.strip("\n").split()
+            dic_p[k] = int(v)
+
+    # pres in queries
+    pts = []
+    with open(fn_q_pres, "r", encoding="utf-8") as f:
+        for buf in f:
+            pts.append(buf.strip("\n"))
+
+    true_rd, num_rules = sampling_qa.merge_and_check(test_id, dic_p, pts, fn_rules, RULE_LEN, RULE_DEP,
+                                                     LIMIT_RULES)
+    with open(fn_result_total, "a", encoding="utf-8") as fo:
+        fo.write(f"#rules without recursion: {num_rules}\n")
+        fo.write(f"#true rule depth: {true_rd}\n")
+        fo.write("\n")
+    logging.info("End to merge rules without recursion.")
+
+    # logging.info("Begin to sampling data.")
+    # sampled_pres = set(os.listdir("data"))
+    # sampling_qa.sampling_for_query_answering(test_id, "data", sampled_pres, fn_result_total, fn_rules, RULE_LEN)
+    # sampling_qa.get_data(test_id, 5000000)
+    # logging.info("End to sampling data.")

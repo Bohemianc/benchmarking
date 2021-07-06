@@ -1,7 +1,4 @@
 import re
-import os
-import sys
-from tqdm import tqdm
 
 pattern_csv = re.compile(r'"(.*?)","(.*?)","(.*?)"')
 pattern_ttl_uri = re.compile(r"<(.*?)> <(.*?)> <(.*?)> .")
@@ -29,14 +26,13 @@ def replace_predicate_inverse(fact: list):
             fact[i] = fact[i].replace(t[1], t[0], 1)
 
 
-def replace_prefix_in_terms(term:str):
+def replace_prefix_in_terms(term: str):
     for t in replaces:
         if t[1] in term:
-            term=term.replace(t[1],t[0])
-            uri=lambda x:"<"+x+">"
+            term = term.replace(t[1], t[0])
+            uri = lambda x: "<" + x + ">"
             return uri(term)
     return term
-
 
 
 def extract_triple(buf: str):
@@ -69,7 +65,7 @@ def extract_triple_from_ttl(buf: str):
         return fact
 
 
-def extract_triple_from_json(result,indices:list):
+def extract_triple_from_json(result, indices: list):
     # !!! modify it when getting facts by entities
     # May be the func need another param.
     # indices[pos] = "callret-" + str(pos)
@@ -78,7 +74,7 @@ def extract_triple_from_json(result,indices:list):
     is_uri = result[indices[2]]["type"] == "uri"
     fact = [result[indices[i]]["value"] for i in (0, 1, 2)]
     wrap_fact(fact, is_uri)
-    return fact,is_uri
+    return fact, is_uri
 
 
 def get_ttl_str(fact: list):

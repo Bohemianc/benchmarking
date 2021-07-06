@@ -13,6 +13,7 @@ import numpy as np
 import heapq
 import copy
 from scipy import sparse
+import gc
 
 
 # def unique_facts(infile: str, outfile: str):
@@ -68,13 +69,12 @@ def refine_by_f1_score(pt: int, embedding_pre: np.ndarray, seq: list):
     path_encoding = []
     for i in range(candi_size):
         path_encoding.append(sum([embedding_pre[x] for x in seq[i]]))
-
     path_encoding = np.array(path_encoding)
     path_sim = list(cal_similarity(path_encoding, embedding_pre[pt], axis=1))
     # top_sim_values = heapq.nlargest(candi_size // 2, path_sim)
     # top_sim_keys = list(map(path_sim.index, top_sim_values))
     top_sim_keys = heapq.nlargest(
-        candi_size, range(len(path_sim)), path_sim.__getitem__
+        candi_size // 2, range(len(path_sim)), path_sim.__getitem__
     )
     return list(map(seq.__getitem__, top_sim_keys))
 
@@ -235,40 +235,28 @@ def save_rules(fn: str, pt: int, rules: list, predicates: list):
                     f.write("), ")
 
 
-if __name__ == "__main__":
-    # hyper parameters
-    BEAM_SIZE = 20
-    RULE_LEN = 2
-    RULE_DEP = 10
-    MAX_ITERATION = max(1, RULE_LEN - 2)
-    LIMIT_SAMPLING = 100
-    LIMIT_PREDICATE = 1000
-    MAX_NEW_ENTITIES = 3000
-    test_id = "test_v7_e12"
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
+def rule_learning(test_id: str, fn_pre: str, fn_ent: str, beam_size: int, rule_len: int, rule_dep: int,
+                  max_iteration: int, limit_sampling: int, limit_predicate: int, max_new_entities: int,
+                  limit_rules: int):
+    fn_pres_dic = os.path.join(test_id, "predicates.txt")
+    fn_learned_pres = os.path.join(test_id, "learned_predicates.log")
+    # dict of predicates: (pre_name,pre_id)
     pred_ids = {}
 
     # get predicates and entities in question dataset
     logging.info("Begin to load target predicates and seed entities.")
     target_pnames = []
-    with open(os.path.join("dataset", "predicates_top10.txt"), "r") as fp:
+    with open(fn_pre, "r") as fp:
         for buf in fp:
             target_pnames.append(buf.strip("\n"))
 
-    # target_pnames = target_pnames[:10]
     num_preds = 0
     for pt in target_pnames:
         pred_ids[pt] = num_preds
         num_preds += 1
 
     seed_entities = []
-    with open(os.path.join("dataset", "entities_top10.txt"), "r", encoding="utf-8") as fe:
+    with open(fn_ent, "r", encoding="utf-8") as fe:
         for buf in fe:
             seed_entities.append(buf.strip("\n"))
     logging.info("End to load target predicates and seed entities.")
@@ -276,12 +264,7 @@ if __name__ == "__main__":
     tot_time = 0
     tot_rules = 0
 
-    for depth in range(RULE_DEP):
-        # update predicate dict
-        # for p in target_pnames:
-        #     pred_ids[p] = num_preds
-        #     num_preds += 1
-        fn_pres_dic = os.path.join(test_id, "predicates.txt")
+    for depth in range(rule_dep):
         with open(fn_pres_dic, "w", encoding="utf-8") as f:
             for pre in pred_ids:
                 f.write(pre + " " + str(pred_ids[pre]) + "\n")
@@ -290,13 +273,14 @@ if __name__ == "__main__":
             start = time.time()
             p = target_pnames[cnt]
             pid = pred_ids[p]
-            with open(os.path.join(test_id, "learned_predicates.log"), "a", encoding="utf-8") as f:
+            with open(fn_learned_pres, "a", encoding="utf-8") as f:
                 f.write(f"{pid} {p}\n")
             pt = 0  # the id of Pt in relation.txt is always 0.
-            logging.info("Begin to learn rules of Pt " + str(pid) + " " + p + "=============")
+            logging.info("Begin to learn rules of Pt " + str(pid) + " " + p + ", depth=" + str(depth))
             # pt = pts_id[cnt]
             facts_dir = os.path.join(test_id, "p" + str(pid))
             if not os.path.exists(facts_dir):
+                # continue
                 os.mkdir(facts_dir)
             facts_fn = os.path.join(facts_dir, "facts.ttl")
             fn_ent = os.path.join(facts_dir, "entity2id.txt")
@@ -310,15 +294,13 @@ if __name__ == "__main__":
             # entities in the query need to be added.
 
             logging.info("Begin to get facts by Pt " + str(pid) + ".")
-            new_entities.update(q.get_facts_by_predicate(p, facts_fn, LIMIT_PREDICATE))
+            new_entities.update(q.get_facts_by_predicate(p, facts_fn, limit_predicate))
             logging.info("End to get facts by Pt " + str(pid) + ".")
-
-            import gc
 
             gc.collect()
             # new_entities = ["dbr:Sint_Maarten"]
             logging.info("Begin to sample by new entities.")
-            s = sampling_mp.Sampling(facts_dir, MAX_ITERATION, LIMIT_SAMPLING, MAX_NEW_ENTITIES, facts_fn)
+            s = sampling_mp.Sampling(facts_dir, max_iteration, limit_sampling, max_new_entities, facts_fn)
             s.main(list(new_entities))
             logging.info("End to sample by new entities.")
 
@@ -345,12 +327,11 @@ if __name__ == "__main__":
                 embedding_ent, embedding_pre, facts
             )
             seq = rule_search(
-                pt, embedding_pre, embedding_arg_s, embedding_arg_o, BEAM_SIZE, RULE_LEN
+                pt, embedding_pre, embedding_arg_s, embedding_arg_o, beam_size, rule_len
             )
             logging.info("End to rule search.")
 
             logging.info("Begin to evaluate rules.")
-            # save_rules("test_v5/p0_lp1000/sequences.dlp", pt, seq, predicates)
             rules = evaluate(pt, len(entities), seq, facts)
             logging.info("End to evaluate rules.")
 
@@ -365,12 +346,21 @@ if __name__ == "__main__":
                 f_result.write(f"time: {end - start}\n")
                 tot_time += end - start
 
+            # remove useless files
+            os.remove(os.path.join(facts_dir, "facts.ttl"))
+            os.remove(os.path.join(facts_dir, "entity2id.txt"))
+            os.remove(os.path.join(facts_dir, "relation2id.txt"))
+            os.remove(os.path.join(facts_dir, "train2id.txt"))
+            os.remove(os.path.join(facts_dir, "test2id.txt"))
+            os.remove(os.path.join(facts_dir, "valid2id.txt"))
+            os.remove(os.path.join(facts_dir, "type_constrain.txt"))
+
         # updating target predicates with predicates in the rule body.
         target_pnames_copy = []
         for pn in target_pnames:
             pid = pred_ids[pn]
             fn_rules = os.path.join(test_id, "p" + str(pid), "rules.dlp")
-            parsed_rules = dlp_translater.dlp_parser(fn_rules, RULE_LEN)
+            parsed_rules = dlp_translater.dlp_parser(fn_rules, rule_len, limit_rules)
             for pres, _ in parsed_rules:
                 for p in pres:
                     if p not in pred_ids:
@@ -380,14 +370,14 @@ if __name__ == "__main__":
         target_pnames = target_pnames_copy.copy()
         print(target_pnames)
 
+    # update predicate dict
+    # with open(fn_pres_dic, "w", encoding="utf-8") as f:
+    #     for pre in pred_ids:
+    #         f.write(pre + " " + str(pred_ids[pre]) + "\n")
+
+    # record results
     fn_result_total = os.path.join(test_id, "results.txt")
     with open(fn_result_total, "a", encoding="utf-8") as f_result:
-        f_result.write(f"beam size: {BEAM_SIZE}\n")
-        f_result.write(f"rule length: {RULE_LEN}\n")
-        f_result.write(f"rule depth: {RULE_DEP}\n")
-        f_result.write(f"limit (predicates): {LIMIT_PREDICATE}\n")
-        f_result.write(f"limit (sampling by entities): {LIMIT_SAMPLING}\n")
-        f_result.write(f"max new entities: {MAX_NEW_ENTITIES}\n")
         f_result.write(f"total rules: {tot_rules}\n")
-        f_result.write(f"totol time (s): {tot_time}\n")
+        f_result.write(f"time(s) for rule learning: {tot_time}\n")
         f_result.write("\n")

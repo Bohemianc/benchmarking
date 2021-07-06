@@ -1,3 +1,5 @@
+import threading
+
 import filtering
 import get_facts as q
 
@@ -10,7 +12,7 @@ import time
 
 
 class Sampling:
-    def __init__(self, out_dir, max_iteration, limit_answer, max_new_entities,fn_facts):
+    def __init__(self, out_dir, max_iteration, limit_answer, max_new_entities, fn_facts):
         self.out_dir = out_dir
         self.file_facts = fn_facts
         self.file_log = os.path.join(out_dir, "requests.txt")
@@ -18,13 +20,14 @@ class Sampling:
         self.file_bad_requests = os.path.join(out_dir, "bad_requests.txt")
         self.max_iteration = max_iteration
         self.limit_answer = limit_answer
-        self.max_new_entities=max_new_entities
+        self.max_new_entities = max_new_entities
 
     def add_thread(
             self,
             q_threads: queue.Queue,
             qu: mp.Queue,
             lock: mp.Lock,
+            lock_thread,
             query: tuple,
             choice: int,
     ):
@@ -34,9 +37,11 @@ class Sampling:
             args=(qu, query, choice, lock, self.limit_answer, self.out_dir),
         )
         # print(str(query)+" added")
+        time.sleep(0.02)
         t.start()
         # print(str(query)+" started")
         q_threads.put(t)
+        lock_thread.release()
 
     def producer(self, entities: list, q_facts: mp.Queue, lock: mp.Lock):
         print("Producer started.")
@@ -46,18 +51,21 @@ class Sampling:
         num_entities_per_it = num_threads // 2
         num_finished = 0
         # print("here -2")
+        lock_thread = threading.BoundedSemaphore(100)
         q_threads = queue.Queue()
         # print("here -1")
         for j in range(min(num_entities_per_it, num_entities - num_finished)):
             e = entities[j]
             # print(f"here 0: {j} {e}")
             # print("here 0.0")
+            lock_thread.acquire()
             self.add_thread(
-                q_threads, q_facts, lock, (e, "?y", "?z"), 0,
+                q_threads, q_facts, lock, lock_thread, (e, "?y", "?z"), 0,
             )
             # print("here 0.5")
+            lock_thread.acquire()
             self.add_thread(
-                q_threads, q_facts, lock, ("?x", "?y", e), 2,
+                q_threads, q_facts, lock, lock_thread, ("?x", "?y", e), 2,
             )
             # print("here 1.0")
             num_finished += 1
@@ -68,16 +76,18 @@ class Sampling:
             # print("here 3")
             if num_finished < num_entities:
                 e = entities[num_finished]
+                lock_thread.acquire()
                 self.add_thread(
-                    q_threads, q_facts, lock, (e, "?y", "?z"), 0,
+                    q_threads, q_facts, lock, lock_thread, (e, "?y", "?z"), 0,
                 )
             # print("here 4")
             q_threads.get().join()
             # print("here 5")
             if num_finished < num_entities:
                 e = entities[num_finished]
+                lock_thread.acquire()
                 self.add_thread(
-                    q_threads, q_facts, lock, ("?x", "?y", e), 2,
+                    q_threads, q_facts, lock, lock_thread, ("?x", "?y", e), 2,
                 )
                 num_finished += 1
                 if num_finished % 1000 == 0:
