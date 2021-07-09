@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     # ====================== set or input parameters ===================================== #
     test_id = "test_v9_e6_bm=100"
-    dataset_dir = lambda x: os.path.join("dataset", x)
+    dataset_dir = lambda x: os.path.join("queries", x)
     # NUM_QUERIES = 10
     # parameters of rule learning
     BEAM_SIZE = 100

@@ -1,0 +1,5 @@
+SELECT DISTINCT ?uri WHERE { ?uri dbo:creator dbr:Bill_Finger . ?uri rdf:type dbo:ComicsCharacter }
+SELECT DISTINCT ?uri WHERE { ?uri dbp:mother dbr:Cleopatra_V_of_Egypt . ?uri dbp:spouse dbr:Ptolemy_XIII_Theos_Philopator . ?uri rdf:type dbo:Royalty }
+SELECT DISTINCT ?uri WHERE { dbr:Pavel_Moroz dbp:hometown ?uri . dbr:Yakov_Estrin dbo:deathPlace ?uri }
+SELECT DISTINCT ?uri WHERE { ?uri dbo:doctoralAdvisor dbr:Ernest_Rutherford . ?uri dbp:doctoralStudents dbr:Charles_Drummond_Ellis . ?uri rdf:type dbo:Scientist }
+SELECT DISTINCT ?uri WHERE { dbr:Josef_Johansson dbp:birthPlace ?uri . dbr:Nader_Guirat dbo:hometown ?uri }

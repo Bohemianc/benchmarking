@@ -453,39 +453,34 @@ if __name__ == "__main__":
     test_ids = ["", "test_v9_e1", "test_v9_e2_lr=3", "test_v9_e3", "test_v9_e4_bm=200", "test_v9_e5", "test_v9_e6_lr=8"]
     fn_rules = ["", "rules_1_lr=30.dlp", "rules_lr=3.dlp", "rules_1_lr=3.dlp", "rules_1_lr=100.dlp", "rules_1_lr=1.dlp",
                 "rules_3_lr=2.dlp"]
-    # true_lrs = [0, 30, 3, 3,]
-    #
-    # pres = []
-    # with open(os.path.join("dataset", "predicates1961-5.txt"), "r", encoding="utf-8") as f1:
-    #     for buf in f1:
-    #         pres.append(buf.strip("\n"))
-    #
-    # for i in range(6, 7):
-    #     test_id = test_ids[i]
-    #     dic_p = dict()
-    #     with open(os.path.join(test_id, "predicates.txt"), "r", encoding="utf-8") as fp:
-    #         for buf in fp:
-    #             k, v = buf.split()
-    #             dic_p[k] = int(v)
-    #
-    #     for lr in lrs[i]:
-    #         fn_out_rules = os.path.join(test_id, "rules", "rules_5_lr=" + str(lr) + ".dlp")
-    #         print("e" + str(i), "lr=" + str(lr),
-    #               merge_and_check(test_id, dic_p, pres, fn_out_rules, rls[i], rds[i], lr))
 
-    # cut down the data size of e4 to 1000000 for drewer
-    # get_data("test_v9_e5",5000000)
-    # lessen_facts(os.path.join("test_v9_e5", "data", "csv"), os.path.join("test_v9_e4", "data", "csv2"), 50000,
-    #              os.path.join("test_v9_e4", "results.txt"))
-    # for i in range(6, 7):
-    #     print(test_ids[i])
-    #     test_id = test_ids[i]
-    #     sampled_pres = set(os.listdir("data"))
-    #     sampling_for_query_answering(test_id, "data", sampled_pres, os.path.join(test_id, "results.txt"),
-    #                                  os.path.join(test_id, "rules", fn_rules[i]), rls[i], 100000)
-    #     get_data(test_id, 5000000)
-    lessen_facts(os.path.join(test_ids[6], "data", "csv"), os.path.join(test_ids[6], "data", "csv6"), 20000000,
-                 os.path.join(test_ids[6], "results.txt"))
-    lessen_facts(os.path.join(test_ids[6], "data", "dlp"), os.path.join(test_ids[6], "data", "dlp6"), 20000000,
-                 os.path.join(test_ids[6], "results.txt"))
+    pres = []
+    with open(os.path.join("queries", "predicates1961-5.txt"), "r", encoding="utf-8") as f1:
+        for buf in f1:
+            pres.append(buf.strip("\n"))
+
+    for i in range(1, 7):
+        test_id = test_ids[i]
+        dic_p = dict()
+        with open(os.path.join(test_id, "predicates.txt"), "r", encoding="utf-8") as fp:
+            for buf in fp:
+                k, v = buf.split()
+                dic_p[k] = int(v)
+
+        for lr in lrs[i]:
+            fn_out_rules = os.path.join(test_id, "rules", "rules_5_lr=" + str(lr) + ".dlp")
+            print("e" + str(i), "lr=" + str(lr),
+                  merge_and_check(test_id, dic_p, pres, fn_out_rules, rls[i], rds[i], lr))
+
+    for i in range(6, 7):
+        print(test_ids[i])
+        test_id = test_ids[i]
+        sampled_pres = set(os.listdir("data"))
+        sampling_for_query_answering(test_id, "data", sampled_pres, os.path.join(test_id, "results.txt"),
+                                     os.path.join(test_id, "rules", fn_rules[i]), rls[i], 100000)
+        get_data(test_id, 5000000)
+    # lessen_facts(os.path.join(test_ids[6], "data", "csv"), os.path.join(test_ids[6], "data", "csv6"), 20000000,
+    #              os.path.join(test_ids[6], "results.txt"))
+    # lessen_facts(os.path.join(test_ids[6], "data", "dlp"), os.path.join(test_ids[6], "data", "dlp6"), 20000000,
+    #              os.path.join(test_ids[6], "results.txt"))
     # print(cal_depth(os.path.join("test_v9_e2","rules","rules_newmc_lr=2.dlp"),2))

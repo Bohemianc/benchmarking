@@ -1,0 +1,12 @@
+<http://dbpedia.org/resource/Ptolemy_XIII_Theos_Philopator>
+<http://dbpedia.org/resource/Charles_Drummond_Ellis>
+<http://dbpedia.org/resource/Yakov_Estrin>
+<http://dbpedia.org/resource/Pavel_Moroz>
+<http://dbpedia.org/ontology/Royalty>
+<http://dbpedia.org/ontology/ComicsCharacter>
+<http://dbpedia.org/resource/Cleopatra_V_of_Egypt>
+<http://dbpedia.org/ontology/Scientist>
+<http://dbpedia.org/resource/Josef_Johansson>
+<http://dbpedia.org/resource/Nader_Guirat>
+<http://dbpedia.org/resource/Ernest_Rutherford>
+<http://dbpedia.org/resource/Bill_Finger>
