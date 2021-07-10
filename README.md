@@ -51,8 +51,10 @@
 
 ## Tested Systems
 
++
+Click [https://drive.google.com/drive/folders/1Y_p-5eaX4ZBAhq9zBBTn3bUVDHdBeeZV?usp=sharing](https://drive.google.com/drive/folders/1Y_p-5eaX4ZBAhq9zBBTn3bUVDHdBeeZV?usp=sharing)
+for runnable jar files of Graal and Drewer
 + Graal
-    + Runnable jar file: `systems/graal.jar`
     + Run command
       ```sh
       java -Xms8g -Xmx8g -jar graal.jar -o [ontology_file] -q [query_file] -d [dataset_dir]
@@ -60,7 +62,6 @@
       > the ontology, queries and the dataset are all in DLGP format proposed by Graal
     + Click [https://graphik-team.github.io/graal/](https://graphik-team.github.io/graal/) for more details
 + Drewer
-    + Runnable jar file: `systems/drewer.jar`
     + Run command
       ```sh
       java -Xms8g -Xmx8g -jar drewer.jar -o [ontology_file] -q [query_file] -d [dataset_dir]
