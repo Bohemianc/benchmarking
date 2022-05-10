@@ -89,7 +89,7 @@ for runnable jar files of Graal and Drewer
 ## Updated on 9 May, 2022
 1. About the rewriting depth
 
-    The argument `rewriting depth` decides the number of iterations of rule learning. Yet the real rewriting depth of th e learned rules may not be eaqual to the specified parameter. On the one hand, the tested systems cannot process recursive rules. So a recursion elimination is needed, which can make the real rewriting depth smaller. On the other hand, a predicate occurs in a rule body can be unexpectedly identical to the predicate of the head atom of another rule, which makes the real rewriting depth larger. In the future, we will manage to control the real rewriting depth of the learned rules.
+    The argument `rewriting depth` decides the number of iterations of rule learning. Yet the real rewriting depth of the learned rules is unnecessary to be equal to the specified value. On the one hand, the tested systems cannot process recursive rules. So a recursion elimination is needed, which can make the real rewriting depth smaller. On the other hand, a predicate occurs in a rule body can be unexpectedly identical to the predicate of the head atom of another rule, which makes the real rewriting depth larger. In the future, we will manage to control the real rewriting depth of the learned rules.
 
 2. Fixed Benchmarks v.s. Framework of Benchmark Construction
 
