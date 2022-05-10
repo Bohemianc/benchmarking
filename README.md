@@ -88,9 +88,11 @@ for runnable jar files of Graal and Drewer
 
 ## Updated on 9 May, 2022
 1. About the rewriting depth
+
     The argument `rewriting depth` decides the number of iterations of rule learning. Yet the real rewriting depth of th e learned rules may not be eaqual to the specified parameter. On the one hand, the tested systems cannot process recursive rules. So a recursion elimination is needed, which can make the real rewriting depth smaller. On the other hand, a predicate occurs in a rule body can be unexpectedly identical to the predicate of the head atom of another rule, which makes the real rewriting depth larger. In the future, we will manage to control the real rewriting depth of the learned rules.
 
 2. Fixed Benchmarks v.s. Framework of Benchmark Construction
+
     So far, we have not given any fixed benchmarks but just the framework for benchmark construction. Because the ontologies from rule learning and the datasets to make the answers of tested systems interesting are both dependent on the target queries. In our experiment, we just select 5 CQs from LC-QuAD. Thus, you need to generate your own benchmark based on the queries that you are interested in.
 
 3. If you have any question using the benchmark, feel free to cantact us (bohemianccc@gmail.com). 
