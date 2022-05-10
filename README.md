@@ -95,5 +95,5 @@ for runnable jar files of Graal and Drewer
 
     So far, we have not given any fixed benchmarks but just the framework for benchmark construction. Because the ontologies from rule learning and the datasets to make the answers of tested systems interesting are both dependent on the target queries. In our experiment, we just select 5 CQs from LC-QuAD. Thus, you need to generate your own benchmark based on the queries that you are interested in.
 
-3. If you have any question using the benchmark, feel free to cantact us (bohemianccc@gmail.com). 
+3. If you have any question using the benchmark, feel free to contact us (bohemianccc@gmail.com). 
     
